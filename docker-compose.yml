@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: quotetrack-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: quotetrack
+      POSTGRES_PASSWORD: quotetrack
+      POSTGRES_DB: quotetrack
+    ports:
+      - "5432:5432"
+    volumes:
+      - quotetrack_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quotetrack -d quotetrack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  quotetrack_pgdata:

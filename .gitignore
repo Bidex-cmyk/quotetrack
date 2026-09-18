@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Go build artifacts
+backend/bin/
+backend/*.exe
+backend/*.test
+*.out
+
+# Frontend (Vite)
+frontend/dist/
+frontend/node_modules/
+frontend/.vite/
