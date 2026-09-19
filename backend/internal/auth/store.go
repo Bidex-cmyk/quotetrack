@@ -72,3 +72,50 @@ func (s *userStore) UpdateUser(ctx context.Context, user *models.User) (*models.
 	}
 	return user, nil
 }
+
+func (s *userStore) UpdatePassword(ctx context.Context, userID, passwordHash string) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE users SET password_hash = $2, updated_at = now() WHERE id = $1`,
+		userID, passwordHash,
+	)
+	if err != nil {
+		return fmt.Errorf("update password: %w", err)
+	}
+	return nil
+}
+
+func (s *userStore) CreateResetToken(ctx context.Context, userID, tokenHash string, expiresAt interface{}) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+		VALUES ($1, $2, $3)`,
+		userID, tokenHash, expiresAt,
+	)
+	if err != nil {
+		return fmt.Errorf("create reset token: %w", err)
+	}
+	return nil
+}
+
+func (s *userStore) FindResetToken(ctx context.Context, tokenHash string) (*models.ResetToken, error) {
+	var rt models.ResetToken
+	err := s.pool.QueryRow(ctx,
+		`SELECT id, user_id, token_hash, expires_at, used_at, created_at
+		FROM password_reset_tokens WHERE token_hash = $1`,
+		tokenHash,
+	).Scan(&rt.ID, &rt.UserID, &rt.TokenHash, &rt.ExpiresAt, &rt.UsedAt, &rt.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("find reset token: %w", err)
+	}
+	return &rt, nil
+}
+
+func (s *userStore) MarkResetTokenUsed(ctx context.Context, tokenID string) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE password_reset_tokens SET used_at = now() WHERE id = $1`,
+		tokenID,
+	)
+	if err != nil {
+		return fmt.Errorf("mark reset token used: %w", err)
+	}
+	return nil
+}

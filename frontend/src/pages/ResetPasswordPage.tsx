@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { useToast } from '../contexts/ToastContext'
+import { Link, useSearchParams } from 'react-router-dom'
+import { api } from '../services/api'
 import PasswordInput from '../components/PasswordInput'
 
 function passwordStrength(pw: string): { level: 'weak' | 'fair' | 'strong'; label: string; color: string } {
@@ -12,42 +11,51 @@ function passwordStrength(pw: string): { level: 'weak' | 'fair' | 'strong'; labe
   if (/[a-z]/.test(pw)) score++
   if (/[0-9]/.test(pw)) score++
   if (/[^A-Za-z0-9]/.test(pw)) score++
-
   if (score <= 2) return { level: 'weak', label: 'Weak', color: '#dc2626' }
   if (score <= 4) return { level: 'fair', label: 'Fair', color: '#d97706' }
   return { level: 'strong', label: 'Strong', color: '#16a34a' }
 }
 
-export default function SignupPage() {
-  const { signup } = useAuth()
-  const { toast } = useToast()
-  const navigate = useNavigate()
-  const [businessName, setBusinessName] = useState('')
-  const [email, setEmail] = useState('')
+export default function ResetPasswordPage() {
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token') || ''
+
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<{
-    businessName?: string
-    email?: string
-    password?: string
-    confirmPassword?: string
-  }>({})
+  const [fieldErrors, setFieldErrors] = useState<{ password?: string; confirmPassword?: string }>({})
   const [busy, setBusy] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const hasLetter = /[a-z]/i.test(password)
   const hasNumber = /[0-9]/.test(password)
   const hasMinLength = password.length >= 8
   const strength = passwordStrength(password)
 
+  if (!token) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <div className="auth-brand">
+            <span className="brand-mark">Q</span>
+            <h1>Invalid link</h1>
+          </div>
+          <p className="auth-tagline">
+            This password reset link is invalid or has expired.
+          </p>
+          <p className="auth-alt" style={{ marginTop: '1rem' }}>
+            <Link to="/forgot-password">Request a new link</Link>
+          </p>
+          <p className="auth-alt">
+            <Link to="/login">Back to login</Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const validate = (): boolean => {
     const errs: typeof fieldErrors = {}
-    if (!businessName.trim()) errs.businessName = 'Business name is required.'
-    if (!email.trim()) {
-      errs.email = 'Email is required.'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      errs.email = 'Please enter a valid email address.'
-    }
     if (!password) {
       errs.password = 'Password is required.'
     } else if (password.length < 8) {
@@ -72,12 +80,11 @@ export default function SignupPage() {
     if (!validate()) return
     setBusy(true)
     try {
-      await signup(email.trim(), password, businessName.trim())
-      toast('Account created. Welcome to QuoteTrack!')
-      navigate('/app')
+      await api.resetPassword(token, password)
+      setSuccess(true)
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message || 'Could not create account. Please try again.')
+        setError(err.message || 'Could not reset password. Please try again.')
       } else {
         setError('Something went wrong. Please try again.')
       }
@@ -86,51 +93,37 @@ export default function SignupPage() {
     }
   }
 
+  if (success) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <div className="auth-brand">
+            <span className="brand-mark">Q</span>
+            <h1>Password reset successful</h1>
+          </div>
+          <p className="auth-tagline">
+            Your password has been reset successfully.
+          </p>
+          <p className="auth-alt" style={{ marginTop: '1rem' }}>
+            <Link to="/login" className="btn btn-primary btn-block">Continue to login</Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
           <span className="brand-mark">Q</span>
-          <h1>Create your account</h1>
+          <h1>Reset your password</h1>
         </div>
-        <p className="auth-tagline">Track every quote and follow up on time.</p>
+        <p className="auth-tagline">Enter your new password below.</p>
         <form onSubmit={handleSubmit} className="auth-form" noValidate>
-          <label className="field">
-            <span>Business name</span>
-            <input
-              type="text"
-              value={businessName}
-              onChange={(e) => {
-                setBusinessName(e.target.value)
-                if (fieldErrors.businessName) setFieldErrors((p) => ({ ...p, businessName: undefined }))
-              }}
-              placeholder="Acme Plumbing"
-              aria-invalid={!!fieldErrors.businessName}
-            />
-            {fieldErrors.businessName && (
-              <span className="field-error" role="alert">{fieldErrors.businessName}</span>
-            )}
-          </label>
-          <label className="field">
-            <span>Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: undefined }))
-              }}
-              placeholder="you@business.com"
-              aria-invalid={!!fieldErrors.email}
-            />
-            {fieldErrors.email && (
-              <span className="field-error" role="alert">{fieldErrors.email}</span>
-            )}
-          </label>
           <PasswordInput
-            label="Password"
-            id="signup-password"
+            label="New password"
+            id="reset-password"
             autoComplete="new-password"
             value={password}
             onChange={(e) => {
@@ -167,8 +160,8 @@ export default function SignupPage() {
             </ul>
           )}
           <PasswordInput
-            label="Confirm password"
-            id="signup-confirm-password"
+            label="Confirm new password"
+            id="reset-confirm-password"
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => {
@@ -180,11 +173,11 @@ export default function SignupPage() {
           />
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="btn btn-primary btn-block" disabled={busy} type="submit">
-            {busy ? 'Creating account…' : 'Create account'}
+            {busy ? 'Resetting…' : 'Reset password'}
           </button>
         </form>
-        <p className="auth-alt">
-          Already have an account? <Link to="/login">Log in</Link>
+        <p className="auth-alt" style={{ marginTop: '1rem' }}>
+          <Link to="/login">Back to login</Link>
         </p>
       </div>
     </div>

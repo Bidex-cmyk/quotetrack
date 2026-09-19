@@ -92,6 +92,18 @@ export const api = {
       body: JSON.stringify(patch),
     }),
 
+  // Password reset
+  forgotPassword: (email: string) =>
+    request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, password: string) =>
+    request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    }),
+
   // Customers
   listCustomers: (q = '') =>
     request<{ customers: CustomerWithStats[] }>(

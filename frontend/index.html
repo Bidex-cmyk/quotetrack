@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QuoteTrack</title>
+    <script>
+      (function() {
+        var stored = localStorage.getItem('quotetrack_theme');
+        var theme = stored === 'light' || stored === 'dark' ? stored : 'system';
+        var resolved;
+        if (theme === 'system') {
+          resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark' : 'light';
+        } else {
+          resolved = theme;
+        }
+        document.documentElement.setAttribute('data-theme', resolved);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

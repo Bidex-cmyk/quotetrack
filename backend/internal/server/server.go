@@ -10,6 +10,7 @@ import (
 	"quotetrack/backend/internal/config"
 	"quotetrack/backend/internal/customers"
 	"quotetrack/backend/internal/dashboard"
+	"quotetrack/backend/internal/mailer"
 	"quotetrack/backend/internal/middleware"
 	"quotetrack/backend/internal/publicquote"
 	"quotetrack/backend/internal/quotes"
@@ -25,8 +26,10 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 	}
 	tokens := auth.NewTokenManager(cfg.JWTSecret, ttl)
 
+	email := mailer.NewFromEnv()
+
 	authStore := auth.NewStore(pool)
-	authHandlers := auth.NewHandlers(authStore, tokens)
+	authHandlers := auth.NewHandlers(authStore, tokens, email, cfg.FrontendURL)
 
 	customerStore := customers.NewStore(pool)
 	customerHandlers := customers.NewHandlers(customerStore)
@@ -42,6 +45,8 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 	// Public routes.
 	mux.HandleFunc("POST /api/auth/signup", authHandlers.Signup)
 	mux.HandleFunc("POST /api/auth/login", authHandlers.Login)
+	mux.HandleFunc("POST /api/auth/forgot-password", authHandlers.ForgotPassword)
+	mux.HandleFunc("POST /api/auth/reset-password", authHandlers.ResetPassword)
 	mux.HandleFunc("GET /api/public/quotes/{publicId}", publicHandlers.Get)
 
 	// Authenticated routes.

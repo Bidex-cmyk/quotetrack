@@ -1,10 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import ProtectedRoute, { GuestRoute } from './components/ProtectedRoute'
 import AppLayout from './layouts/AppLayout'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import QuotesPage from './pages/QuotesPage'
 import QuoteFormPage from './pages/QuoteFormPage'
@@ -19,6 +22,7 @@ import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
   return (
+    <ThemeProvider>
     <ToastProvider>
       <AuthProvider>
         <Routes>
@@ -38,6 +42,8 @@ export default function App() {
               </GuestRoute>
             }
           />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/quote/:publicId" element={<PublicQuotePage />} />
           <Route
             path="/app"
@@ -63,5 +69,6 @@ export default function App() {
         </Routes>
       </AuthProvider>
     </ToastProvider>
+    </ThemeProvider>
   )
 }

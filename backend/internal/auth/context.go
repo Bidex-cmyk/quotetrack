@@ -20,6 +20,10 @@ type Store interface {
 	UserByEmail(ctx context.Context, email string) (*models.User, string, error)
 	UserByID(ctx context.Context, id string) (*models.User, error)
 	UpdateUser(ctx context.Context, user *models.User) (*models.User, error)
+	UpdatePassword(ctx context.Context, userID, passwordHash string) error
+	CreateResetToken(ctx context.Context, userID, tokenHash string, expiresAt interface{}) error
+	FindResetToken(ctx context.Context, tokenHash string) (*models.ResetToken, error)
+	MarkResetTokenUsed(ctx context.Context, tokenID string) error
 }
 
 // UserFromContext returns the authenticated user stored by the middleware,

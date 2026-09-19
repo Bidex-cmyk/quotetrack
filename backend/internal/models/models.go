@@ -92,3 +92,13 @@ var validStatuses = map[QuoteStatus]bool{
 func (s QuoteStatus) Valid() bool {
 	return validStatuses[s]
 }
+
+// ResetToken represents a password-reset token row.
+type ResetToken struct {
+	ID        string     `json:"id"`
+	UserID    string     `json:"user_id"`
+	TokenHash string     `json:"-"` // never expose the hash
+	ExpiresAt time.Time  `json:"expires_at"`
+	UsedAt    *time.Time `json:"used_at"`
+	CreatedAt time.Time  `json:"created_at"`
+}

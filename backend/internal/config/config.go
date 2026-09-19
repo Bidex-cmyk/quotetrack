@@ -9,6 +9,7 @@ type Config struct {
 	JWTSecret       string
 	JWTExpiry       string
 	FrontendOrigin  string
+	FrontendURL     string
 	ShutdownTimeout int
 }
 
@@ -20,6 +21,7 @@ func Load() *Config {
 		JWTSecret:       getenv("JWT_SECRET", "dev-only-secret-change-me"),
 		JWTExpiry:       getenv("JWT_EXPIRY", "168h"),
 		FrontendOrigin:  getenv("FRONTEND_ORIGIN", "http://localhost:5173"),
+		FrontendURL:     getenv("FRONTEND_URL", "http://localhost:5173"),
 		ShutdownTimeout: 10,
 	}
 }
