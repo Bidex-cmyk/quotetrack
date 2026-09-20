@@ -10,6 +10,7 @@ import (
 	"quotetrack/backend/internal/config"
 	"quotetrack/backend/internal/customers"
 	"quotetrack/backend/internal/dashboard"
+	"quotetrack/backend/internal/httpapi"
 	"quotetrack/backend/internal/mailer"
 	"quotetrack/backend/internal/middleware"
 	"quotetrack/backend/internal/publicquote"
@@ -41,6 +42,11 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 	dashHandlers := dashboard.NewHandlers(dashStore)
 
 	publicHandlers := publicquote.NewHandlers(quoteStore)
+
+	// Health check for load balancers and uptime monitors.
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		httpapi.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	})
 
 	// Public routes.
 	mux.HandleFunc("POST /api/auth/signup", authHandlers.Signup)

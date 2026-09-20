@@ -18,6 +18,11 @@ import (
 func main() {
 	cfg := config.Load()
 
+	if cfg.JWTSecret == "dev-only-secret-change-me" {
+		log.Println("WARNING: JWT_SECRET is not set; using the development default. " +
+			"Set a strong random JWT_SECRET before deploying.")
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 

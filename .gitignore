@@ -144,9 +144,13 @@ vite.config.ts.timestamp-*
 
 # Go build artifacts
 backend/bin/
+backend/server
 backend/*.exe
 backend/*.test
 *.out
+
+# Installer packages (must never be committed)
+*.deb
 
 # Frontend (Vite)
 frontend/dist/

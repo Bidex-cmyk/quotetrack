@@ -242,11 +242,22 @@ func (s *Store) Create(ctx context.Context, in *CreateQuoteInput) (*models.Quote
 		return nil, err // ErrNoRows propagated
 	}
 
-	// Sequential per-user quote number (e.g. 0001, 0002, ...).
+	// Sequential per-user quote number (QT-0001, QT-0002, ...).
+	//
+	// A transaction-scoped advisory lock serializes allocation per user so
+	// concurrent creations cannot race on the same number. The next number is
+	// derived from the highest existing number for the user — COUNT(*) would
+	// reuse numbers after a quote is deleted. The unique constraint on
+	// (user_id, quote_number) is the database-level backstop.
+	if _, err := tx.Exec(ctx,
+		`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, in.UserID); err != nil {
+		return nil, fmt.Errorf("lock quote number: %w", err)
+	}
 	var seq int
 	if err := tx.QueryRow(ctx,
-		`SELECT COUNT(*) FROM quotes WHERE user_id = $1`, in.UserID).Scan(&seq); err != nil {
-		return nil, fmt.Errorf("count quotes: %w", err)
+		`SELECT COALESCE(MAX(NULLIF(regexp_replace(quote_number, '[^0-9]', '', 'g'), '')::bigint), 0)
+		 FROM quotes WHERE user_id = $1`, in.UserID).Scan(&seq); err != nil {
+		return nil, fmt.Errorf("next quote number: %w", err)
 	}
 	in.QuoteNumber = QuoteNumber(seq + 1)
 

@@ -15,7 +15,10 @@ import type {
 const TOKEN_KEY = 'quotetrack_token'
 const USER_KEY = 'quotetrack_user'
 
-export const apiBase = '/api'
+// Base URL for API requests. In development the Vite dev server proxies
+// /api to the backend, so the relative default works. In production set
+// VITE_API_URL to the backend's base URL (e.g. https://api.example.com/api).
+export const apiBase = import.meta.env.VITE_API_URL || '/api'
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)

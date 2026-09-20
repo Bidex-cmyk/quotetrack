@@ -182,8 +182,8 @@ type forgotReq struct {
 
 // resetReq is the request body for POST /api/auth/reset-password.
 type resetReq struct {
-	Token       string `json:"token"`
-	Password    string `json:"password"`
+	Token    string `json:"token"`
+	Password string `json:"password"`
 }
 
 // ForgotPassword issues a password-reset token for the given email.
@@ -331,5 +331,3 @@ func hashToken(token string) string {
 	h := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(h[:])
 }
-
-

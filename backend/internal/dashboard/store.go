@@ -60,15 +60,15 @@ func (s *Store) FollowUpsDue(ctx context.Context, userID string, today time.Time
 
 // Analytics holds basic win/loss metrics.
 type Analytics struct {
-	TotalQuotes  int         `json:"total_quotes"`
+	TotalQuotes  int          `json:"total_quotes"`
 	TotalValue   models.Cents `json:"total_value"`
-	Won          int         `json:"won"`
+	Won          int          `json:"won"`
 	WonValue     models.Cents `json:"won_value"`
-	Lost         int         `json:"lost"`
+	Lost         int          `json:"lost"`
 	LostValue    models.Cents `json:"lost_value"`
-	Waiting      int         `json:"waiting"`
+	Waiting      int          `json:"waiting"`
 	WaitingValue models.Cents `json:"waiting_value"`
-	WinRate      float64     `json:"win_rate"`
+	WinRate      float64      `json:"win_rate"`
 }
 
 // GetAnalytics computes the analytics summary for a user.

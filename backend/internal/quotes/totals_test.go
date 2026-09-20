@@ -8,8 +8,8 @@ import (
 
 func TestTotals(t *testing.T) {
 	items := []models.QuoteItem{
-		{Description: "a", Quantity: 2, UnitPrice: 1000},   // 2 * 10.00 = 20.00
-		{Description: "b", Quantity: 1.5, UnitPrice: 999},  // 1.5 * 9.99 = 14.985 -> 14.99
+		{Description: "a", Quantity: 2, UnitPrice: 1000},  // 2 * 10.00 = 20.00
+		{Description: "b", Quantity: 1.5, UnitPrice: 999}, // 1.5 * 9.99 = 14.985 -> 14.99
 	}
 	var subtotal, total models.Cents
 	subtotal, total = Totals(items)
