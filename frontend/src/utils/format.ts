@@ -1,8 +1,8 @@
-export function formatMoney(cents: number): string {
+export function formatMoney(dollars: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format((cents ?? 0) / 100)
+  }).format(dollars ?? 0)
 }
 
 export function formatDate(iso: string | null | undefined): string {

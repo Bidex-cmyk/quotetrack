@@ -25,7 +25,7 @@ export default function LineItemsEditor({
     onChange(items.filter((_, i) => i !== index))
   }
 
-  const total = items.reduce((sum, it) => sum + (lineTotal(it) * 100), 0) / 100
+  const total = items.reduce((sum, it) => sum + lineTotal(it), 0)
 
   return (
     <div className="line-items-editor">
@@ -57,7 +57,7 @@ export default function LineItemsEditor({
             value={item.unit_price}
             onChange={(e) => update(i, { unit_price: parseFloat(e.target.value) || 0 })}
           />
-          <span className="line-item-total">{formatMoney(lineTotal(item) * 100)}</span>
+          <span className="line-item-total">{formatMoney(lineTotal(item))}</span>
           <button
             className="btn btn-ghost btn-icon"
             onClick={() => remove(i)}
@@ -72,7 +72,7 @@ export default function LineItemsEditor({
           + Add line
         </button>
         <span className="line-total">
-          Total: <strong>{formatMoney(total * 100)}</strong>
+          Total: <strong>{formatMoney(total)}</strong>
         </span>
       </div>
     </div>

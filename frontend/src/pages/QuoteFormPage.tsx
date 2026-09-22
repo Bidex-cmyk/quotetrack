@@ -54,7 +54,7 @@ export default function QuoteFormPage() {
           q.items.map((it) => ({
             description: it.description,
             quantity: it.quantity,
-            unit_price: it.unit_price / 100,
+            unit_price: it.unit_price,
           })),
         )
       })
