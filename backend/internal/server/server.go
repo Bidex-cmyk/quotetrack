@@ -43,6 +43,11 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 
 	publicHandlers := publicquote.NewHandlers(quoteStore)
 
+	// Per-IP rate limiting for /api/auth/* only (login brute force, signup
+	// abuse, reset-mail bombing). In-memory: single instance, no Redis.
+	authLimiter := middleware.NewAuthRateLimiter(
+		cfg.RateLimitAuthPerMinute, cfg.RateLimitAuthBurst)
+
 	// Health check for load balancers and uptime monitors.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		httpapi.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -84,5 +89,9 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 
 	mux.Handle("/api/", tokens.Middleware(authStore)(api))
 
-	return middleware.Recover(middleware.Logger(middleware.CORS(cfg.FrontendOrigin)(mux)))
+	// Rate limiter sits inside CORS so 429 responses are readable by the
+	// browser; CORS handles preflight itself, so OPTIONS never consumes
+	// rate-limit tokens.
+	return middleware.Recover(middleware.Logger(
+		middleware.CORS(cfg.FrontendOrigin)(authLimiter.Wrap(mux))))
 }
