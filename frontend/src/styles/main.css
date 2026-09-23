@@ -295,7 +295,7 @@ h1,h2,h3,h4 { font-weight: 600; }
 @media (max-width: 767px) {
   .app-nav { display: none; }
   .app-header-right { display: none; }
-  .mobile-menu-btn { display: flex; }
+  .mobile-menu-btn { display: flex; margin-left: auto; }
 }
 @media (min-width: 768px) {
   .mobile-menu, .mobile-menu-backdrop, .mobile-menu-btn { display: none !important; }
