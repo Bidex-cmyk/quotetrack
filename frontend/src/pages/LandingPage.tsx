@@ -48,9 +48,6 @@ export default function LandingPage() {
           <Link to="/signup" className="btn btn-primary">
             Get started free
           </Link>
-          <a href="#how" className="btn btn-ghost">
-            See how it works
-          </a>
         </div>
         <p className="landing-muted">No signup required to look around.</p>
       </section>
