@@ -1,0 +1,63 @@
+# Daily Postgres backup
+#
+# Render's free-tier Postgres has no automated backups and Render cron jobs
+# require a paid plan, so the dump runs here instead: every day at 03:00 UTC
+# (public-repo scheduled workflows are free) and uploads to a Cloudflare R2
+# bucket (10 GB free tier).
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   PROD_DATABASE_URL   Render Postgres External Database URL (includes sslmode)
+#   R2_ENDPOINT         https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+#   R2_BUCKET           e.g. quotetrack-backups
+#   R2_ACCESS_KEY_ID    R2 API token (Object Read & Write)
+#   R2_SECRET_ACCESS_KEY
+#
+# See docs/BACKUPS.md for setup and restore instructions.
+
+name: Daily Postgres backup
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC daily
+  workflow_dispatch: # manual runs, e.g. to verify setup after adding secrets
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ubuntu-latest ships the aws CLI (used for the R2 upload); only the
+      # Postgres client needs installing. Note: pg_dump must be >= the major
+      # version of the Render Postgres instance.
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Dump database
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: ./scripts/backup.sh
+
+      # Cloudflare R2 is S3-compatible; the account endpoint is passed via
+      # --endpoint-url. Credentials are standard AWS_* env vars.
+      - name: Upload dump to Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          set -euo pipefail
+          dump="backups/quotetrack-$(date -u +%Y-%m-%d).sql.gz"
+          test -s "$dump"
+          aws s3 cp "$dump" "s3://${R2_BUCKET}/quotetrack/$(basename "$dump")" \
+            --endpoint-url "${R2_ENDPOINT}"
+          echo "Uploaded $(basename "$dump") to s3://${R2_BUCKET}/quotetrack/"

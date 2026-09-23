@@ -156,3 +156,6 @@ backend/*.test
 frontend/dist/
 frontend/node_modules/
 frontend/.vite/
+
+# Local database dumps (contain production data)
+backups/
