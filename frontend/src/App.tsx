@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -17,6 +17,7 @@ import NewCustomerPage from './pages/NewCustomerPage'
 import CustomerDetailPage from './pages/CustomerDetailPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
+import LandingPage from './pages/LandingPage'
 import PublicQuotePage from './pages/PublicQuotePage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -64,7 +65,7 @@ export default function App() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
-          <Route path="/" element={<Navigate to="/app" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
