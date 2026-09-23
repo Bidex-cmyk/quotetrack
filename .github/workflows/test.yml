@@ -1,0 +1,93 @@
+# CI: backend tests (with a real Postgres) + frontend build/tests.
+#
+# The DB-backed tests (handler_money_test.go, store_concurrent_test.go) skip
+# themselves unless TEST_DATABASE_URL is set, so CI provides a disposable
+# postgres:16 service and points them at it. Each of those tests then creates
+# its own throwaway schema and runs the app's embedded migrator
+# (backend/internal/database.Migrate) inside it; the explicit migration step
+# below additionally applies the SQL files to the service's public schema,
+# which validates the migration files themselves on a virgin database.
+
+name: CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Backend tests (Postgres)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: quotetrack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/quotetrack_test?sslmode=disable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go (matches go.mod)
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Run migrations against the test DB
+        run: |
+          set -euo pipefail
+          for f in internal/database/migrations/*.sql; do
+            echo "applying $f"
+            psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - name: Go tests
+        run: go test ./... -v
+
+  frontend:
+    name: Frontend build + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # No .nvmrc and no package.json engines field exist, so pin the active
+      # Node LTS.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (tsc + vite)
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test -- --run
