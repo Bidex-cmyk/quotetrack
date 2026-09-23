@@ -58,7 +58,12 @@ jobs:
           set -euo pipefail
           for f in internal/database/migrations/*.sql; do
             echo "applying $f"
-            psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+            # Match the Go migrator: it runs pool.Begin -> tx.Exec(whole file)
+            # -> tx.Commit, i.e. each file is one command inside one
+            # transaction. psql -f is autocommit by default, which breaks
+            # migrations that contain LOCK TABLE; --single-transaction
+            # wraps the file exactly like the migrator does.
+            psql "$TEST_DATABASE_URL" --single-transaction -v ON_ERROR_STOP=1 -f "$f"
           done
 
       - name: Go tests
